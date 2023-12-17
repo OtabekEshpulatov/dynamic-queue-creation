@@ -20,10 +20,12 @@ public class RabbitMqConfiguration implements RabbitListenerConfigurer {
 
     @Autowired
     private ConnectionFactory connectionFactory;
+
     @Bean
     public Jackson2JsonMessageConverter producerJackson2MessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
+
     @Bean
     public MappingJackson2MessageConverter consumerJackson2MessageConverter() {
         return new MappingJackson2MessageConverter();
@@ -36,13 +38,14 @@ public class RabbitMqConfiguration implements RabbitListenerConfigurer {
         rabbitTemplate.setMessageConverter(producerJackson2MessageConverter());
         return rabbitTemplate;
     }
+
     @Bean
     public RabbitAdmin rabbitAdmin() {
         return new RabbitAdmin(connectionFactory);
     }
 
     @Bean
-    public RabbitListenerEndpointRegistry rabbitListenerEndpointRegistry(){
+    public RabbitListenerEndpointRegistry rabbitListenerEndpointRegistry() {
         return new RabbitListenerEndpointRegistry();
     }
 
@@ -66,6 +69,7 @@ public class RabbitMqConfiguration implements RabbitListenerConfigurer {
         factory.setConsecutiveActiveTrigger(1);
         factory.setConsecutiveIdleTrigger(1);
         factory.setConnectionFactory(connectionFactory);
+
         registrar.setContainerFactory(factory);
         registrar.setEndpointRegistry(rabbitListenerEndpointRegistry());
         registrar.setMessageHandlerMethodFactory(messageHandlerMethodFactory());

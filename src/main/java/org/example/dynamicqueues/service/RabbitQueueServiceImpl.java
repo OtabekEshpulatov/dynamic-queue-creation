@@ -32,7 +32,6 @@ public class RabbitQueueServiceImpl implements RabbitQueueService {
     @Override
     public void addNewQueue(String queueName, String exchangeName, String routingKey) {
         Properties queueProperties = rabbitAdmin.getQueueProperties(queueName);
-
         if (queueProperties == null) {
             Queue queue = new Queue(queueName, true, false, false);
             Binding binding = new Binding(queueName, Binding.DestinationType.QUEUE, exchangeName, routingKey, null);

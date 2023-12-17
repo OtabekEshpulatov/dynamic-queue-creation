@@ -5,6 +5,9 @@ import org.example.dynamicqueues.Manager;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Author: otabek
  * Date: 16/12/23 12:46
@@ -12,7 +15,11 @@ import org.springframework.stereotype.Service;
 @Service
 @Log4j2
 public class RabbitMqTestSetRunnerConsumerService {
-    @RabbitListener(id = Manager.EXCHANGE_LISTENER, queues = "#{manager.allQueues()}",concurrency ="100" )
+
+
+    private AtomicInteger atomicInteger=new AtomicInteger(0);
+
+    @RabbitListener(id = Manager.EXCHANGE_LISTENER, concurrency = "5")
     public void receiver(String testId) {
         System.out.println("**************************** Received message: " + testId);
         try {
@@ -21,6 +28,7 @@ public class RabbitMqTestSetRunnerConsumerService {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-    }
 
+//        System.out.println("latch: " + atomicInteger.incrementAndGet());
+    }
 }

@@ -5,11 +5,12 @@ import lombok.extern.log4j.Log4j2;
 import org.example.dynamicqueues.service.RabbitQueueService;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Random;
 
 /**
  * Author: otabek
@@ -19,44 +20,88 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Log4j2
-public class Manager {
-
-
+public class Manager implements ApplicationListener<ApplicationReadyEvent> {
     public static final String EXCHANGE_LISTENER = "jb.exchange";
-
 
     private final RabbitQueueService rabbitQueueService;
     private final RabbitTemplate rabbitTemplate;
     private final RabbitAdmin rabbitAdmin;
+    static String[] queueNames;
+    static String[] queueRoutings;
 
-    String[] queueNames = {"jb.korzinka", "jb.havas", "jb.uzum", "jb.samoy", "jb.kors", "jb.hors", "jb.market", "jb.merkel"};
-    String[] queueRoutings = {"jb.korzinka.routing", "jb.havas.routing", "jb.uzum.routing", "jb.samoy.routing", "jb.kors.routing", "jb.hors.routing", "jb.market.routing", "jb.merkel.routing"};
 
-    public String[] allQueues() {
-        List<String> queues = new ArrayList<>();
+    static {
+        String[] companyNames = {
+                "Apple", "Tesla", "Google", "Microsoft", "Amazon",
+                "Facebook", "IBM", "Oracle", "Samsung", "Adobe",
+                "Intel", "Sony", "HP", "Dell", "Cisco",
+                "NVIDIA", "Panasonic", "Lenovo", "Qualcomm", "VMware",
+                "Verizon", "AT&T", "Baidu", "Alibaba", "Tencent",
+                "Netflix", "Spotify", "Uber", "Airbnb", "SpaceX",
+                "Twitter", "LinkedIn", "Snapchat", "Pinterest", "Square",
+                "Reddit", "Etsy", "Dropbox", "Slack", "Zoom",
+                "PayPal", "Visa", "Mastercard", "Tesla", "Ford",
+                "General Motors", "Boeing", "Lockheed Martin", "Raytheon", "General Electric",
+                "Siemens", "Vodafone", "Coca-Cola", "PepsiCo", "Nestle",
+                "Procter & Gamble", "Unilever", "Johnson & Johnson", "Novartis", "Merck",
+                "Bayer", "Siemens", "Toyota", "Honda", "Nissan",
+                "Mitsubishi", "Subaru", "Lexus", "Audi", "BMW",
+                "Mercedes-Benz", "Volkswagen", "Ferrari", "Lamborghini", "Rolls-Royce",
+                "Jaguar", "Land Rover", "Ford", "Chevrolet", "Cadillac",
+                "Chanel", "Louis Vuitton", "Gucci", "Prada", "Hermès",
+                "Rolex", "Cartier", "Tiffany & Co.", "Nike", "Adidas",
+                "Puma", "Under Armour", "Reebok", "New Balance", "Converse",
+                "Sony", "Samsung", "LG", "Panasonic", "Philips",
+                "Sharp", "Toshiba", "Canon", "Nikon", "Sony Ericsson",
+                // Add more company names as needed
+        };
 
-        for (int i = 0; i < queueRoutings.length; i++) {
-            String queueName=queueNames[i];
-            String routing= queueRoutings[i];
+        int size = companyNames.length;
+        queueNames = new String[size];
+        queueRoutings = new String[size];
 
-            if (rabbitAdmin.getQueueProperties(queueName) != null) {
-                queues.add(queueName);
-            } else {
-                rabbitQueueService.addNewQueue(queueName, EXCHANGE_LISTENER, routing);
+        // Fill arrays with predefined company names and corresponding routings
+        for (int i = 0; i < size; i++) {
+            String companyName = companyNames[i % companyNames.length];
+            queueNames[i] = "jb." + companyName;
+            queueRoutings[i] = "jb." + companyName + ".routing";
+        }
+    }
+
+
+//    @Scheduled(cron = "*/30 * * * * *")
+//    public void sendMessage() {
+////        clearQueues();
+//
+//
+//    }
+
+
+    @Override
+    public void onApplicationEvent(ApplicationReadyEvent event) {
+        for (int i = 0; i < queueNames.length; i++) {
+            String queueName = queueNames[i];
+            String routing = queueRoutings[i];
+            rabbitQueueService.addNewQueue(queueName, EXCHANGE_LISTENER, routing, false);
+        }
+
+        for (int i = 0; i < queueRoutings.length && i < queueNames.length; i++) {
+            if (new Random().nextBoolean()) {
+                String queueName = queueNames[i];
+                String routing = queueRoutings[i];
+
+                for (int i1 = 0; i1 < 1000; i1++) {
+                    rabbitTemplate.convertAndSend(EXCHANGE_LISTENER, routing, routing.substring(queueName.lastIndexOf(".") + 1));
+                }
             }
         }
-
-        log.info("running queues: " + queues);
-        return queues.toArray(new String[]{});
     }
 
-
-    @Scheduled(cron = "*/10 * * * * *")
-    public void sendMessage() {
-        for (int i = 0; i < queueRoutings.length; i++) {
-            String routing=queueRoutings [i];
-            rabbitTemplate.convertAndSend(EXCHANGE_LISTENER, routing, routing.substring(routing.lastIndexOf(".")+1));
-
+    private void clearQueues() {
+        for (String queueName : queueNames) {
+            rabbitAdmin.deleteQueue(queueName);
         }
     }
+
+
 }
