@@ -2,15 +2,15 @@ package org.example.dynamicqueues;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.example.dynamicqueues.dto.TgPojo;
 import org.example.dynamicqueues.service.RabbitQueueService;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.Random;
+import java.util.UUID;
 
 /**
  * Author: otabek
@@ -26,6 +26,9 @@ public class Manager implements ApplicationListener<ApplicationReadyEvent> {
     private final RabbitQueueService rabbitQueueService;
     private final RabbitTemplate rabbitTemplate;
     private final RabbitAdmin rabbitAdmin;
+
+    private static final Boolean create = true;
+    private static final Boolean addListener = null;
     static String[] queueNames;
     static String[] queueRoutings;
 
@@ -56,7 +59,7 @@ public class Manager implements ApplicationListener<ApplicationReadyEvent> {
                 // Add more company names as needed
         };
 
-        int size = companyNames.length;
+        int size = 5;
         queueNames = new String[size];
         queueRoutings = new String[size];
 
@@ -69,30 +72,27 @@ public class Manager implements ApplicationListener<ApplicationReadyEvent> {
     }
 
 
-//    @Scheduled(cron = "*/30 * * * * *")
-//    public void sendMessage() {
-////        clearQueues();
-//
-//
-//    }
-
-
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        for (int i = 0; i < queueNames.length; i++) {
-            String queueName = queueNames[i];
-            String routing = queueRoutings[i];
-            rabbitQueueService.addNewQueue(queueName, EXCHANGE_LISTENER, routing, false);
-        }
-
-        for (int i = 0; i < queueRoutings.length && i < queueNames.length; i++) {
-            if (new Random().nextBoolean()) {
+        if (create != null) {
+            for (int i = 0; i < queueNames.length; i++) {
                 String queueName = queueNames[i];
                 String routing = queueRoutings[i];
-
-                for (int i1 = 0; i1 < 1000; i1++) {
-                    rabbitTemplate.convertAndSend(EXCHANGE_LISTENER, routing, routing.substring(queueName.lastIndexOf(".") + 1));
+                if (create == Boolean.TRUE) {
+                    rabbitQueueService.addNewQueue(queueName, EXCHANGE_LISTENER, routing);
+                } else {
+                    rabbitAdmin.deleteQueue(queueName);
                 }
+            }
+        }
+
+
+        for (int i = 0; i < queueRoutings.length && i < queueNames.length; i++) {
+            String queueName = queueNames[i];
+            String routing = queueRoutings[i];
+
+            for (int i1 = 0; i1 < 5000; i1++) {
+                rabbitTemplate.convertAndSend(EXCHANGE_LISTENER, routing, new TgPojo(queueName, null));
             }
         }
     }
@@ -102,6 +102,4 @@ public class Manager implements ApplicationListener<ApplicationReadyEvent> {
             rabbitAdmin.deleteQueue(queueName);
         }
     }
-
-
 }
