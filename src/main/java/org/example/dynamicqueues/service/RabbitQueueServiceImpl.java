@@ -9,6 +9,9 @@ import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Author: otabek
  * Date: 16/12/23 12:24
@@ -24,7 +27,10 @@ public class RabbitQueueServiceImpl implements RabbitQueueService {
     @Override
     public void addNewQueue(String queueName, String exchangeName, String routingKey) {
         try {
-            Queue queue = new Queue(queueName, true, false, false);
+            Map<String, Object> args = new HashMap<>();
+            args.put("x-max-priority", 3);
+
+            Queue queue = new Queue(queueName, true, false, false, args);
             Binding binding = new Binding(queueName, Binding.DestinationType.QUEUE, exchangeName, routingKey, null);
 
             rabbitAdmin.declareQueue(queue);
@@ -47,6 +53,7 @@ public class RabbitQueueServiceImpl implements RabbitQueueService {
 
     private static void configureListener(SimpleMessageListenerContainer listenerContainer) {
         listenerContainer.setPrefetchCount(1);
+//        listenerContainer.setConcurrency("10");
         listenerContainer.setMessageListener(new TgQueueListener());
     }
 }

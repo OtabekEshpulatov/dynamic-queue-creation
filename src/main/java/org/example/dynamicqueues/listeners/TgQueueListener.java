@@ -12,9 +12,9 @@ public class TgQueueListener extends AbstractJbQueueListener<TgPojo> {
 
     @Override
     protected void listen(TgPojo tgPojo) {
-        System.out.println(tgPojo);
+        System.out.println(tgPojo.getText());
         try {
-            Thread.sleep(10000);
+            Thread.sleep(10);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

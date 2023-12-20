@@ -22,8 +22,6 @@ public abstract class AbstractJbQueueListener<T> implements MessageListener {
     public void onMessage(Message message) {
         try {
             T t = new ObjectMapper().readValue(message.getBody(), persistentClass);
-            System.out.println("message: " + t.toString());
-
             listen(t);
 
         } catch (IOException e) {

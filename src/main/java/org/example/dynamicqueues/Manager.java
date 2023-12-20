@@ -10,8 +10,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 /**
  * Author: otabek
  * Date: 16/12/23 13:55
@@ -59,7 +57,7 @@ public class Manager implements ApplicationListener<ApplicationReadyEvent> {
                 // Add more company names as needed
         };
 
-        int size = 5;
+        int size = 1;
         queueNames = new String[size];
         queueRoutings = new String[size];
 
@@ -92,8 +90,18 @@ public class Manager implements ApplicationListener<ApplicationReadyEvent> {
             String routing = queueRoutings[i];
 
             for (int i1 = 0; i1 < 5000; i1++) {
-                rabbitTemplate.convertAndSend(EXCHANGE_LISTENER, routing, new TgPojo(queueName, null));
+                rabbitTemplate.convertAndSend(EXCHANGE_LISTENER, routing, new TgPojo(i1+"", null), message -> {
+                    message.getMessageProperties().setPriority(1);
+                    return message;
+                });
             }
+
+//            for (int i1 = 0; i1 < 10; i1++) {
+//                rabbitTemplate.convertAndSend(EXCHANGE_LISTENER, routing, new TgPojo("i", null), message -> {
+//                    message.getMessageProperties().setPriority(2);
+//                    return message;
+//                });
+//            }
         }
     }
 
